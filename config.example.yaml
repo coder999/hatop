@@ -1,0 +1,38 @@
+mqtt:
+  host: 192.168.1.10
+  port: 1883
+  username: hatop
+  password: "change-me"
+  topic_prefix: "myhouse/ha"
+
+# Shown once every 6h without an update, values are marked stale.
+stale_seconds: 21600
+
+# Sparkline history length per numeric sensor (in-memory only).
+sparkline_points: 120
+
+groups:
+  - name: Temperatures
+    layout: grid          # arrange sensors in a 3-column grid
+    sensors:
+      - {slug: living_room_temp, label: "Living Rm", kind: temp, unit: "F"}
+      - {slug: outside_temp, label: Weather, kind: temp, unit: "F"}
+
+  - name: Water
+    sensors:
+      - {slug: water_pressure, label: "Water Pressure", kind: gauge, unit: " PSI"}
+      - {slug: water_usage_today, label: "Water Usage Today", kind: gauge, unit: " gal"}
+
+  - name: Energy
+    sensors:
+      - {slug: home_load, label: "Home Load", kind: gauge, unit: " W"}
+      # HA commonly reports cumulative energy sensors in Wh; scale converts to kWh for display.
+      - {slug: energy_cumulative, label: "Cumulative Use", kind: counter, unit: " kWh", scale: 0.001}
+
+  - name: Security
+    sensors:
+      - {slug: alarm_state, label: "Security System", kind: enum, good: [disarmed], bad: [triggered]}
+      - {slug: front_door_lock, label: "Front Door Lock", kind: enum, good: [locked]}
+      # Sensors sharing group_as collapse into one "All closed" / "OPEN: ..." line.
+      - {slug: garage_door_left, label: Left, kind: enum, good: [closed], group_as: garage_doors}
+      - {slug: garage_door_right, label: Right, kind: enum, good: [closed], group_as: garage_doors}
