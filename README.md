@@ -65,7 +65,7 @@ credentials. `config.yaml` is already gitignored.
 hatop
 ```
 
-`q` or `Ctrl+C` quits.
+`q` or `Ctrl+Q` quits.
 
 ## Development
 

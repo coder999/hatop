@@ -77,6 +77,15 @@ def load_config(path: Path | None = None) -> HatopConfig:
 
 
 def _parse_config(raw: dict, config_path: Path) -> HatopConfig:
+    try:
+        return _parse_config_unsafe(raw, config_path)
+    except HatopConfigError:
+        raise
+    except (TypeError, ValueError, AttributeError) as exc:
+        raise HatopConfigError(f"hatop: {config_path} is malformed: {exc}") from exc
+
+
+def _parse_config_unsafe(raw: dict, config_path: Path) -> HatopConfig:
     if "mqtt" not in raw:
         raise HatopConfigError(f"hatop: {config_path} is missing required 'mqtt' section")
     mqtt_raw = raw["mqtt"]

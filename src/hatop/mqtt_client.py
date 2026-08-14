@@ -40,12 +40,12 @@ class MqttClient:
         self._client.on_message = self._handle_message
 
     def start(self) -> None:
-        self._client.connect(self._config.host, self._config.port)
+        self._client.connect_async(self._config.host, self._config.port)
         self._client.loop_start()
 
     def stop(self) -> None:
-        self._client.loop_stop()
         self._client.disconnect()
+        self._client.loop_stop()
 
     def _handle_connect(self, client, userdata, connect_flags, reason_code, properties) -> None:
         if reason_code == 0:
@@ -63,8 +63,9 @@ class MqttClient:
             return
         slug = message.topic[len(prefix):]
         try:
-            value, ts = parse_payload(message.payload.decode("utf-8"))
-        except PayloadParseError:
+            payload_str = message.payload.decode("utf-8")
+            value, ts = parse_payload(payload_str)
+        except (UnicodeDecodeError, PayloadParseError):
             logger.warning("hatop: ignoring malformed payload on %s", message.topic)
             return
         self._on_update(slug, value, ts)

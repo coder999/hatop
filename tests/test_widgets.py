@@ -1,4 +1,3 @@
-import pytest
 from textual.app import App, ComposeResult
 from textual.containers import Grid
 
@@ -93,6 +92,18 @@ async def test_group_as_sensors_collapse_to_all_closed():
         app.panel.refresh_state(store, now=1, stale_seconds=21600)
         status = app.query_one("#group-garage_doors")
         assert "All closed" in str(status.visual)
+
+
+async def test_sensor_row_label_is_not_truncated_by_value_column_width():
+    group = GroupConfig(
+        name="Security",
+        sensors=[SensorConfig(slug="water_pressure", label="Home Water Pressure", kind="gauge", unit=" PSI")],
+    )
+    app = PanelHarness(group)
+
+    async with app.run_test():
+        label = app.query_one("#sensor-water_pressure Label")
+        assert label.size.width == 20
 
 
 async def test_grid_layout_group_mounts_grid_container():

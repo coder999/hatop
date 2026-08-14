@@ -100,6 +100,33 @@ groups:
         load_config(config_path)
 
 
+def test_non_mapping_mqtt_section_raises_hatop_config_error(tmp_path):
+    config_path = write_config(tmp_path, "mqtt: 5\ngroups: []\n")
+
+    with pytest.raises(HatopConfigError):
+        load_config(config_path)
+
+
+def test_non_numeric_port_raises_hatop_config_error(tmp_path):
+    config_path = write_config(
+        tmp_path,
+        """
+mqtt:
+  host: 192.168.1.10
+  username: nexus
+  password: secret
+  port: not-a-number
+groups:
+  - name: Group
+    sensors:
+      - {slug: some_slug, kind: gauge}
+""",
+    )
+
+    with pytest.raises(HatopConfigError):
+        load_config(config_path)
+
+
 def test_sensor_label_defaults_to_slug(tmp_path):
     config_path = write_config(
         tmp_path,

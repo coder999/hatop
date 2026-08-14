@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    "textual>=0.60",
+    "textual>=8.2,<9",
     "paho-mqtt>=2.1",
     "pyyaml>=6.0",
 ]

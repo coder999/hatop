@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from hatop.config import MqttConfig
 from hatop.mqtt_client import MqttClient
@@ -40,6 +40,15 @@ def test_handle_message_ignores_malformed_payload_without_raising():
     assert updates == []
 
 
+def test_handle_message_ignores_non_utf8_payload_without_raising():
+    client, updates, _ = make_client()
+    message = SimpleNamespace(topic="nexus/ha/weather_temp", payload=b"\xff\xfe not valid utf-8")
+
+    client._handle_message(MagicMock(), None, message)
+
+    assert updates == []
+
+
 def test_handle_connect_subscribes_and_reports_connected():
     client, _, statuses = make_client()
     fake_mqtt_client = MagicMock()
@@ -66,3 +75,16 @@ def test_handle_disconnect_reports_reconnecting():
     client._handle_disconnect(MagicMock(), None, {}, 1, None)
 
     assert statuses == ["reconnecting"]
+
+
+def test_start_uses_connect_async_so_unreachable_broker_does_not_raise():
+    with patch("hatop.mqtt_client.mqtt.Client") as MockClient:
+        fake_mqtt_client = MockClient.return_value
+        config = MqttConfig(host="broker", username="u", password="p")
+        client = MqttClient(config, on_update=lambda *a: None, on_status=lambda s: None)
+
+        client.start()
+
+        fake_mqtt_client.connect_async.assert_called_once_with("broker", 1883)
+        fake_mqtt_client.connect.assert_not_called()
+        fake_mqtt_client.loop_start.assert_called_once()

@@ -38,7 +38,7 @@ class SensorRow(Horizontal):
     DEFAULT_CSS = """
     SensorRow { height: 1; }
     SensorRow > Label { width: 20; }
-    SensorRow > Static { width: 14; }
+    SensorRow > #value { width: 14; }
     SensorRow > Sparkline { width: 1fr; }
     """
 
