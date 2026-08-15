@@ -30,6 +30,7 @@ class SensorConfig:
     good: tuple[str, ...] = ()
     bad: tuple[str, ...] = ()
     group_as: str | None = None
+    display: str = "standard"  # "graph" | "inline_graph" | "standard"
 
     def __post_init__(self) -> None:
         if not self.label:
@@ -52,6 +53,7 @@ class HatopConfig:
 
 
 VALID_KINDS = ("temp", "gauge", "counter", "enum")
+VALID_DISPLAYS = ("graph", "inline_graph", "standard")
 
 
 def default_config_path() -> Path:
@@ -121,6 +123,12 @@ def _parse_config_unsafe(raw: dict, config_path: Path) -> HatopConfig:
                     f"hatop: {config_path} sensor '{sensor_raw['slug']}' has unknown "
                     f"kind '{sensor_raw['kind']}' (must be one of {VALID_KINDS})"
                 )
+            display = sensor_raw.get("display", "standard")
+            if display not in VALID_DISPLAYS:
+                raise HatopConfigError(
+                    f"hatop: {config_path} sensor '{sensor_raw['slug']}' has unknown "
+                    f"display '{display}' (must be one of {VALID_DISPLAYS})"
+                )
             sensors.append(
                 SensorConfig(
                     slug=sensor_raw["slug"],
@@ -131,6 +139,7 @@ def _parse_config_unsafe(raw: dict, config_path: Path) -> HatopConfig:
                     good=tuple(sensor_raw.get("good", ())),
                     bad=tuple(sensor_raw.get("bad", ())),
                     group_as=sensor_raw.get("group_as"),
+                    display=display,
                 )
             )
         groups.append(

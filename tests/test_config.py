@@ -127,6 +127,65 @@ groups:
         load_config(config_path)
 
 
+def test_sensor_display_defaults_to_standard(tmp_path):
+    config_path = write_config(
+        tmp_path,
+        """
+mqtt:
+  host: 192.168.1.10
+  username: nexus
+  password: secret
+groups:
+  - name: Group
+    sensors:
+      - {slug: some_slug, kind: gauge}
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert config.groups[0].sensors[0].display == "standard"
+
+
+def test_sensor_display_can_be_set_explicitly(tmp_path):
+    config_path = write_config(
+        tmp_path,
+        """
+mqtt:
+  host: 192.168.1.10
+  username: nexus
+  password: secret
+groups:
+  - name: Group
+    sensors:
+      - {slug: some_slug, kind: gauge, display: graph}
+""",
+    )
+
+    config = load_config(config_path)
+
+    assert config.groups[0].sensors[0].display == "graph"
+
+
+def test_unknown_sensor_display_raises_error(tmp_path):
+    config_path = write_config(
+        tmp_path,
+        """
+mqtt:
+  host: 192.168.1.10
+  username: nexus
+  password: secret
+groups:
+  - name: Group
+    sensors:
+      - {slug: some_slug, kind: gauge, display: not_a_real_display}
+""",
+    )
+
+    with pytest.raises(HatopConfigError, match="unknown display"):
+        load_config(config_path)
+
+
 def test_sensor_label_defaults_to_slug(tmp_path):
     config_path = write_config(
         tmp_path,

@@ -5,8 +5,10 @@ dashboard for Home Assistant sensor data streamed over MQTT.
 
 Subscribes to retained + live MQTT messages (payload format
 `<value>|<unix-epoch-seconds>`) and renders them as live-updating panels
-with sparkline history — built for setups that already publish HA sensor
-state to MQTT on a fixed topic tree (`<topic_prefix>/<slug>`).
+— built for setups that already publish HA sensor state to MQTT on a fixed
+topic tree (`<topic_prefix>/<slug>`). Groups alternate across two columns
+of compact, btop-style bordered panels, sized to fit a standard 80x24
+terminal without needing to resize the window.
 
 ## Install
 
@@ -40,9 +42,14 @@ Then edit it to list your own broker connection and sensors:
   its live sparkline (default 120; in-memory only, resets on restart).
 - `groups` — one or more named sections, each a list of sensors:
   - `slug` — the MQTT topic suffix.
-  - `kind` — `temp` / `gauge` (value + sparkline), `counter` (scaled value,
-    no sparkline — e.g. a cumulative energy meter), or `enum` (colored
-    status text, e.g. a lock or alarm state).
+  - `kind` — `temp` / `gauge` (numeric, scaled + unit-suffixed), `counter`
+    (scaled cumulative value, e.g. a Wh-native energy meter shown in kWh),
+    or `enum` (colored status text, e.g. a lock or alarm state).
+  - `display` — `standard` (default: a compact figure, no graph — not every
+    sensor needs one), `inline_graph` (adds a sparkline beside the value),
+    or `graph` (a taller standalone trend graph below the value, btop-CPU-box
+    style — reserve this for one or two sensors you actually want to watch
+    trend, since it costs the most vertical space).
   - `label` — display name (defaults to `slug`).
   - `unit` — suffix appended to the value, e.g. `"F"` or `" PSI"` (include
     your own leading space if you want one).
@@ -52,8 +59,9 @@ Then edit it to list your own broker connection and sensors:
     `enum` sensors; anything else renders yellow.
   - `group_as` — sensors sharing the same key collapse into a single "All
     closed" / "OPEN: <labels>" line (e.g. multiple garage door sensors).
-  - `layout: grid` on a group arranges its sensors in a 3-column grid
-    instead of one per line (handy for a dozen+ temperature sensors).
+  - `layout: grid` on a group arranges its sensors in a compact 2-column
+    grid of merged "label value" cells instead of one per line (handy
+    for a dozen+ temperature sensors).
 
 **Keep your real config out of version control** if you fork/publish this
 repo — it will contain your household's entity layout and MQTT

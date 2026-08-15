@@ -13,7 +13,7 @@ sparkline_points: 120
 
 groups:
   - name: Temperatures
-    layout: grid          # arrange sensors in a 3-column grid
+    layout: grid          # arrange sensors in a compact 2-column grid
     sensors:
       - {slug: living_room_temp, label: "Living Rm", kind: temp, unit: "F"}
       - {slug: outside_temp, label: Weather, kind: temp, unit: "F"}
@@ -25,7 +25,9 @@ groups:
 
   - name: Energy
     sensors:
-      - {slug: home_load, label: "Home Load", kind: gauge, unit: " W"}
+      # display: graph gives this one a taller standalone trend graph (like btop's
+      # CPU box) instead of the default compact figure-only line.
+      - {slug: home_load, label: "Home Load", kind: gauge, unit: " W", display: graph}
       # HA commonly reports cumulative energy sensors in Wh; scale converts to kWh for display.
       - {slug: energy_cumulative, label: "Cumulative Use", kind: counter, unit: " kWh", scale: 0.001}
 
