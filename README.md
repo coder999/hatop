@@ -67,6 +67,78 @@ Then edit it to list your own broker connection and sensors:
 repo — it will contain your household's entity layout and MQTT
 credentials. `config.yaml` is already gitignored.
 
+## Publishing from Home Assistant
+
+hatop doesn't care how `<topic_prefix>/<slug>` gets populated — any
+publisher that writes `<value>|<unix-epoch-seconds>` retained messages
+works. A common setup is a single HA automation that publishes tagged
+entities' state to MQTT. Two things matter if you build one:
+
+**Filter at the trigger, not inside the action.** It's tempting to
+trigger on the raw `state_changed` event system-wide and filter down to
+your tagged entities inside the automation's action — but that means
+the automation *runs* (and queues) once per state change for every
+entity in your house, not just the ones you care about. On a system
+with any background chatter (zigbee, HomeKit, etc.) this can overrun
+the automation's run queue continuously, which is enough sustained load
+to starve Home Assistant's recorder mid-backup. Use `platform: state`
+with an explicit `entity_id:` list so the trigger itself only fires for
+entities you're actually publishing.
+
+**Throttle high-churn sensors.** Not every sensor needs to publish the
+instant its raw value changes — a temperature reading updating once a
+minute is plenty, while a lock or alarm state changing instantly
+matters. Split high-frequency, low-urgency sensors (temps, humidity)
+onto their own `time_pattern` trigger that batch-publishes current
+state on an interval, and reserve immediate on-change publishing for
+the ones where it counts.
+
+Example automation (Home Assistant YAML), adjust the `entity_id:` lists
+to your setup:
+
+```yaml
+- alias: Publish sensors to MQTT
+  triggers:
+    - platform: state
+      id: on_change
+      entity_id:
+        - lock.front_door
+        - binary_sensor.water_leak
+    - platform: time_pattern
+      id: slow_tick
+      minutes: /1
+  actions:
+    - choose:
+        - conditions:
+            - condition: trigger
+              id: on_change
+          sequence:
+            - data:
+                topic: "myhouse/ha/{{ trigger.entity_id.split('.')[1] }}"
+                payload: "{{ trigger.to_state.state }}|{{ as_timestamp(now()) | int }}"
+                retain: true
+              action: mqtt.publish
+        - conditions:
+            - condition: trigger
+              id: slow_tick
+          sequence:
+            - repeat:
+                for_each:
+                  - sensor.outside_temp
+                  - sensor.living_room_temp
+                sequence:
+                  - data:
+                      topic: "myhouse/ha/{{ repeat.item.split('.')[1] }}"
+                      payload: "{{ states(repeat.item) }}|{{ as_timestamp(now()) | int }}"
+                      retain: true
+                    action: mqtt.publish
+```
+
+This intentionally keeps slug derivation simple (the entity_id's object
+id) rather than something dynamic like an HA label lookup — pick
+whatever mapping fits your setup, just make sure it can't fire for
+entities outside your published set.
+
 ## Run
 
 ```bash
